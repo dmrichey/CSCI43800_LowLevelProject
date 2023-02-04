@@ -1,0 +1,74 @@
+[gd_scene load_steps=8 format=2]
+
+[sub_resource type="PlaneMesh" id=1]
+size = Vector2( 10, 10 )
+subdivide_width = 32
+subdivide_depth = 32
+
+[sub_resource type="Shader" id=2]
+code = "shader_type spatial;
+render_mode specular_toon;
+
+uniform sampler2D noise;
+//uniform float height_scale = ;
+uniform sampler2D normalmap;
+varying vec2 tex_position;
+
+float wave(vec2 position){
+	position += texture(noise, position / 10.0).x * 3.0 - 1.5;
+	vec2 wv = 1.5 - abs(cos(position)) - abs(sin(position));
+	return pow(1.0 - pow(wv.x * wv.y, 0.65), 4.0);
+}
+
+float height(vec2 position, float time) {
+  float d = wave((position + time) * 0.5) * 0.3;
+  d += wave((position - time) * 0.3) * 0.35;
+  d += wave((position + time) * 0.4) * 0.2;
+  d += wave((position - time) * 0.7) * 0.1;
+  return d;
+}
+
+void vertex() {
+	vec2 pos = VERTEX.xz;
+	float k = height(pos, TIME);
+	VERTEX.y = k;
+	
+	NORMAL = normalize(vec3(k - height(pos + vec2(0.1, 0.0), TIME), 0.1, k - height(pos + vec2(0.0, 0.1), TIME)));
+}
+
+void fragment() {
+	NORMALMAP = texture(normalmap, tex_position).xyz;
+	
+	float fresnel = sqrt(1.0 - dot(NORMAL, VIEW));
+	RIM = 0.2;
+	METALLIC = 0.0;
+	ROUGHNESS = 0.01 * (1.0 - fresnel);
+	ALBEDO = vec3(0.01, 0.05, 0.03) + (0.1 * fresnel);
+}"
+
+[sub_resource type="OpenSimplexNoise" id=3]
+
+[sub_resource type="NoiseTexture" id=4]
+noise = SubResource( 3 )
+
+[sub_resource type="OpenSimplexNoise" id=5]
+
+[sub_resource type="NoiseTexture" id=6]
+as_normalmap = true
+noise = SubResource( 5 )
+
+[sub_resource type="ShaderMaterial" id=7]
+shader = SubResource( 2 )
+shader_param/noise = SubResource( 4 )
+shader_param/normalmap = SubResource( 6 )
+
+[node name="Spatial" type="Spatial"]
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0339924, 0 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 7 )
+
+[node name="OmniLight" type="OmniLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.201429, 0.969373, 0.00237417 )
+visible = false

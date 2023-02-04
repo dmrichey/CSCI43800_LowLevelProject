@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://PngItem_675653.png" type="Texture" id=1]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform float time_factor = 2.5;
+
+void vertex() {
+	VERTEX.x += 0.175 * sin(TIME * time_factor + VERTEX.x) * (VERTEX.y - 160.0);
+	VERTEX.y += 3.0 * sin(TIME + VERTEX.y);
+}
+
+void fragment() {
+	
+}"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/time_factor = 2.5
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Icon" type="Sprite" parent="."]
+material = SubResource( 2 )
+position = Vector2( 161, -321 )
+scale = Vector2( 0.5, 1 )
+texture = ExtResource( 1 )
